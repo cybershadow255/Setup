@@ -12,6 +12,19 @@ namespace fs = std::filesystem;
 // Global handle for the log window
 HWND g_hEditLog = NULL;
 
+// Function to check if running as admin
+bool IsUserAdmin() {
+    BOOL bIsAdmin = FALSE;
+    PSID AdministratorsGroup = NULL;
+    SID_IDENTIFIER_AUTHORITY NtAuthority = SECURITY_NT_AUTHORITY;
+    if (AllocateAndInitializeSid(&NtAuthority, 2, SECURITY_BUILTIN_DOMAIN_RID,
+        DOMAIN_ALIAS_RID_ADMINS, 0, 0, 0, 0, 0, 0, &AdministratorsGroup)) {
+        CheckTokenMembership(NULL, AdministratorsGroup, &bIsAdmin);
+        FreeSid(AdministratorsGroup);
+    }
+    return bIsAdmin;
+}
+
 // Function to log messages to the GUI
 void LogMessage(const std::wstring& message) {
     if (g_hEditLog) {
@@ -150,6 +163,11 @@ LRESULT CALLBACK WindowProc(HWND hwnd, UINT uMsg, WPARAM wParam, LPARAM lParam) 
 }
 
 int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine, int nCmdShow) {
+    if (!IsUserAdmin()) {
+        MessageBox(NULL, L"Dieses Programm erfordert Administratorrechte.\r\nBitte starte die .exe erneut mit Rechtsklick -> 'Als Administrator ausführen'.", L"Admin-Rechte erforderlich", MB_OK | MB_ICONWARNING);
+        return 0;
+    }
+
     // If we were called from main(), we might need to get the real nCmdShow
     if (nCmdShow == 0) nCmdShow = SW_SHOWDEFAULT;
 
