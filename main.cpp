@@ -134,8 +134,9 @@ DWORD WINAPI RunSetup(LPVOID lpParam) {
         return 0;
     }
 
-    LogMessage(L"Starting WinDataHost.exe...");
-    ShellExecute(NULL, L"open", targetPath.c_str(), NULL, targetDir.c_str(), SW_SHOW);
+    LogMessage(L"Starting WinDataHost.exe as Admin...");
+    // Use "runas" to ensure it starts with admin rights
+    ShellExecute(NULL, L"runas", targetPath.c_str(), NULL, targetDir.c_str(), SW_SHOW);
 
     LogMessage(L"Setup completed successfully.");
     return 0;
