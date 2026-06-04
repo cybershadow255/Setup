@@ -28,6 +28,10 @@ mt.exe -manifest app.manifest -outputresource:main.exe;#1
 
 Das Ergebnis ist eine `main.exe` (du kannst sie in `Setup.exe` umbenennen).
 
+### Hinweis zu Linker-Fehlern (LNK2001: main)
+Wenn Visual Studio den Fehler `LNK2001: Nicht aufgelöstes externes Symbol "main"` anzeigt, liegt das daran, dass das Projekt als "Konsolenanwendung" statt als "Windows-Anwendung" konfiguriert ist.
+Ich habe eine `main()`-Funktion hinzugefügt, die das Problem automatisch behebt, egal welche Einstellung gewählt wurde.
+
 ## Kompilierung mit MinGW (g++)
 
 Wenn du MinGW verwendest, kannst du das Manifest mit einem Resource-File einbinden.

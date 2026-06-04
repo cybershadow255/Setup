@@ -78,7 +78,7 @@ DWORD WINAPI RunSetup(LPVOID lpParam) {
 
     if (sourcePath.empty()) {
         LogMessage(L"Error: WinDataHost.exe not found on Desktop or in Downloads.");
-        return;
+        return 0;
     }
     LogMessage(L"Found source: " + sourcePath);
 
@@ -88,7 +88,7 @@ DWORD WINAPI RunSetup(LPVOID lpParam) {
             LogMessage(L"Created target directory: " + targetDir);
         } else {
             LogMessage(L"Error: Could not create target directory.");
-            return;
+            return 0;
         }
     } else {
         LogMessage(L"Target directory already exists.");
@@ -142,6 +142,9 @@ LRESULT CALLBACK WindowProc(HWND hwnd, UINT uMsg, WPARAM wParam, LPARAM lParam) 
 }
 
 int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine, int nCmdShow) {
+    // If we were called from main(), we might need to get the real nCmdShow
+    if (nCmdShow == 0) nCmdShow = SW_SHOWDEFAULT;
+
     const wchar_t CLASS_NAME[] = L"SetupWindowClass";
 
     WNDCLASS wc = { };
@@ -169,4 +172,9 @@ int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine
     }
 
     return 0;
+}
+
+// Support for Console SubSystem linking
+int main() {
+    return WinMain(GetModuleHandle(NULL), NULL, GetCommandLineA(), SW_SHOWDEFAULT);
 }
