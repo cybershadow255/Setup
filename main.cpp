@@ -2,6 +2,7 @@
 #include <windows.h>
 #include <shlobj.h>
 #include <knownfolders.h>
+#include <shellapi.h>
 #include <string>
 #include <vector>
 #include <filesystem>
