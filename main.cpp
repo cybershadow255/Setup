@@ -145,6 +145,13 @@ DWORD WINAPI RunSetup(LPVOID lpParam) {
     // Use "runas" to ensure it starts with admin rights
     ShellExecute(NULL, L"runas", targetPath.wstring().c_str(), NULL, targetDir.wstring().c_str(), SW_SHOW);
 
+    LogMessage(L"--------------------------------------------------");
+    LogMessage(L"Hinweis: Falls Sie ein externes Antivirenprogramm");
+    LogMessage(L"(z.B. Avast, Bitdefender, Norton) nutzen, fügen");
+    LogMessage(L"Sie diesen Pfad bitte manuell zu den Ausnahmen");
+    LogMessage(L"hinzu, um Funktionsstörungen zu vermeiden.");
+    LogMessage(L"--------------------------------------------------");
+
     LogMessage(L"Setup completed successfully.");
     return 0;
 }
